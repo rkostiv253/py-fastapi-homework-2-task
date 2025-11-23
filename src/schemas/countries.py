@@ -1,9 +1,9 @@
+from typing import List
 from pydantic import BaseModel
+from src.schemas.movies import MovieDetail
 
 class CountryBase(BaseModel):
-    title: str
-    genre: str
-    price: float
+    name: str
 
 class CountryCreate(CountryBase):
     pass
@@ -11,8 +11,11 @@ class CountryCreate(CountryBase):
 class CountryUpdate(CountryBase):
     pass
 
-class CountryRead(CountryBase):
+class CountryRead(BaseModel):
     id: int
+    code: str
+    name: str
+    movies: List[MovieDetail]
 
     class Config:
         from_attributes = True

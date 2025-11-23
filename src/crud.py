@@ -2,7 +2,7 @@ import math
 
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, desc
 from src.database.models import MovieModel, GenreModel, ActorModel, LanguageModel
 from src.schemas.movies import MovieCreate, MovieUpdate, MovieListResponse, MovieDetail, MovieListItem
 
@@ -15,19 +15,19 @@ async def create_movie(db: AsyncSession, movie: MovieCreate):
 
     if movie.genres:
         result = await db.execute(
-            select(GenreModel).where(GenreModel.id.in_(movie.genres))
+            select(GenreModel).where(GenreModel.name.in_(movie.genres))
         )
         new_movie.genres = list(result.scalars())
 
     if movie.actors:
         result = await db.execute(
-            select(ActorModel).where(ActorModel.id.in_(movie.actors))
+            select(ActorModel).where(ActorModel.name.in_(movie.actors))
         )
         new_movie.actors = list(result.scalars())
 
     if movie.languages:
         result = await db.execute(
-            select(LanguageModel).where(LanguageModel.id.in_(movie.languages))
+            select(LanguageModel).where(LanguageModel.name.in_(movie.languages))
         )
         new_movie.languages = list(result.scalars())
 
@@ -56,7 +56,7 @@ async def get_movies(db: AsyncSession, page: int, per_page: int):
         raise HTTPException(status_code=404, detail="No movies found.")
 
     result = await db.execute(
-        select(MovieModel).order_by(MovieModel.id).offset(offset).limit(per_page))
+        select(MovieModel).order_by(desc(MovieModel.id)).offset(offset).limit(per_page))
 
     movies = result.scalars().all()
 
@@ -100,30 +100,30 @@ async def update_movie(db: AsyncSession, movie_id: int, movie: MovieUpdate):
             setattr(db_movie, field, update_data[field])
 
     if "genres" in update_data:
-        genre_ids = update_data["genres"] or []
-        if genre_ids:
+        genre_names = update_data["genres"] or []
+        if genre_names:
             result = await db.execute(
-                select(GenreModel).where(GenreModel.id.in_(genre_ids))
+                select(GenreModel).where(GenreModel.name.in_(genre_names))
             )
             db_movie.genres = list(result.scalars().all())
         else:
             db_movie.genres.clear()
 
     if "actors" in update_data:
-        actor_ids = update_data["actors"] or []
-        if actor_ids:
+        actor_names = update_data["actors"] or []
+        if actor_names:
             result = await db.execute(
-                select(ActorModel).where(ActorModel.id.in_(actor_ids))
+                select(ActorModel).where(ActorModel.name.in_(actor_names))
             )
             db_movie.actors = list(result.scalars().all())
         else:
             db_movie.actors.clear()
 
     if "languages" in update_data:
-        language_ids = update_data["languages"] or []
-        if language_ids:
+        language_names = update_data["languages"] or []
+        if language_names:
             result = await db.execute(
-                select(LanguageModel).where(LanguageModel.id.in_(language_ids))
+                select(LanguageModel).where(LanguageModel.name.in_(language_names))
             )
             db_movie.languages = list(result.scalars().all())
         else:

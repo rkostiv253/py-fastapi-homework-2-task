@@ -1,9 +1,9 @@
+from typing import List
 from pydantic import BaseModel
+from src.schemas.movies import MovieDetail
 
 class LanguageBase(BaseModel):
-    title: str
-    genre: str
-    price: float
+    name: str
 
 class LanguageCreate(LanguageBase):
     pass
@@ -11,8 +11,10 @@ class LanguageCreate(LanguageBase):
 class LanguageUpdate(LanguageBase):
     pass
 
-class LanguageRead(LanguageBase):
+class LanguageRead(BaseModel):
     id: int
+    name: str
+    movies: List[MovieDetail]
 
     class Config:
         from_attributes = True

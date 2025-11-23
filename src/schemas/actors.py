@@ -1,9 +1,9 @@
+from typing import List
 from pydantic import BaseModel
+from src.schemas.movies import MovieDetail
 
 class ActorBase(BaseModel):
-    title: str
-    genre: str
-    price: float
+    name: str
 
 class ActorCreate(ActorBase):
     pass
@@ -11,8 +11,10 @@ class ActorCreate(ActorBase):
 class ActorUpdate(ActorBase):
     pass
 
-class ActorRead(ActorBase):
+class ActorRead(BaseModel):
     id: int
+    name: str
+    movies: List[MovieDetail]
 
     class Config:
         from_attributes = True
