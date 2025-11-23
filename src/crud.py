@@ -13,32 +13,67 @@ async def create_movie(db: AsyncSession, movie: MovieCreate):
     db.add(new_movie)
     await db.flush()
 
-    if movie.genres:
-        result = await db.execute(
-            select(GenreModel).where(GenreModel.name.in_(movie.genres))
-        )
-        new_movie.genres = list(result.scalars())
+    db_genres_query = await db.execute(
+        select(GenreModel).where(GenreModel.name.in_(movie.genres))
+    )
+    db_genres = db_genres_query.scalars().all()
+    existing_names = [genre.name for genre in db_genres]
+    missing_names = [genre for genre in movie.genres if genre not in existing_names]
 
-    if movie.actors:
-        result = await db.execute(
-            select(ActorModel).where(ActorModel.name.in_(movie.actors))
-        )
-        new_movie.actors = list(result.scalars())
+    new_genres = []
+    for name in missing_names:
+        genre = GenreModel(name=name)
+        db.add(genre)
+        new_genres.append(genre)
 
-    if movie.languages:
-        result = await db.execute(
-            select(LanguageModel).where(LanguageModel.name.in_(movie.languages))
-        )
-        new_movie.languages = list(result.scalars())
+    await db.flush()
+    all_genres = db_genres + new_genres
+    new_movie.genres = all_genres
+
+    db_actors_query = await db.execute(
+        select(ActorModel).where(ActorModel.name.in_(movie.actors))
+    )
+    db_actors = db_actors_query.scalars().all()
+    existing_names = [actor.name for actor in db_actors]
+    missing_names = [actor for actor in movie.actors if actor not in existing_names]
+
+    new_actors = []
+    for name in missing_names:
+        actor = ActorModel(name=name)
+        db.add(actor)
+        new_actors.append(actor)
+
+    await db.flush()
+    all_actors = db_actors + new_actors
+    new_movie.actors = all_actors
+
+    db_languages_query = await db.execute(
+        select(LanguageModel).where(LanguageModel.name.in_(movie.languages))
+    )
+    db_languages = db_languages_query.scalars().all()
+    existing_names = [language.name for language in db_languages]
+    missing_names = [language for language in movie.languages if language not in existing_names]
+
+    new_languages = []
+    for name in missing_names:
+        language = LanguageModel(name=name)
+        db.add(language)
+        new_languages.append(language)
+
+    await db.flush()
+    all_languages = db_languages + new_languages
+    new_movie.languages = all_languages
 
     await db.commit()
     await db.refresh(new_movie)
     return new_movie
 
+
 async def get_movie(db: AsyncSession, movie_id: int):
     result = await db.execute(select(MovieModel).where(MovieModel.id == movie_id))
     movie = result.scalar_one_or_none()
     return movie
+
 
 async def get_movies(db: AsyncSession, page: int, per_page: int):
 
@@ -75,6 +110,7 @@ async def get_movies(db: AsyncSession, page: int, per_page: int):
         prev_page=prev_page,
         next_page=next_page,
     )
+
 
 async def update_movie(db: AsyncSession, movie_id: int, movie: MovieUpdate):
     result = await db.execute(select(MovieModel).where(MovieModel.id == movie_id))
@@ -132,6 +168,7 @@ async def update_movie(db: AsyncSession, movie_id: int, movie: MovieUpdate):
     await db.commit()
     await db.refresh(db_movie)
     return db_movie
+
 
 async def delete_movie(db: AsyncSession, movie_id: int):
     result = await db.execute(select(MovieModel).where(MovieModel.id == movie_id))
